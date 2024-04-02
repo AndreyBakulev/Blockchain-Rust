@@ -1,24 +1,69 @@
 mod blockchain;
 mod block;
+
+use std::io;
 use blockchain::Blockchain;
-use block::Transaction;
+
 fn main() {
-    let mut blockchain = Blockchain::new();
+    let mut blockchain = Blockchain::new(4);
 
-    let transaction1 = Transaction {
-        sender: String::from("Alice"),
-        receiver: String::from("Bob"),
-        amount: 1.0,
-    };
+    loop {
+        println!("===========================================");
+        println!("=====CPU Bitcoin miner by Andrey Bakulev===");
+        println!("===========================================");
+        println!("==================Options==================");
+        println!("==========1.Add block to chain=============");
+        println!("======2.Verify Integrity of the chain======");
+        println!("=======3.Retrieve info from a block========");
+        println!("======4.Adjust the chain's difficulty======");
+        println!("=============5.Delete a Block==============");
+        println!("================6.Exit=====================");
 
-    let transaction2 = Transaction {
-        sender: String::from("Bob"),
-        receiver: String::from("Charlie"),
-        amount: 0.5,
-    };
+        let mut choice = String::new();
+        io::stdin().read_line(&mut choice).expect("Failed to read input");
+        let choice: i32 = choice.trim().parse().expect("Invalid input");
+        match choice {
+            1 => {
+                blockchain.mine_latest();
+            }
+            2 => {
+                if blockchain.validate_chain() {
+                    println!("Chain is valid!");
+                } else {
+                    println!("Chain is not valid!");
+                }
+            }
+            3 => {
+                println!("Enter the index of the block to retrieve:");
+                let mut index = String::new();
+                io::stdin().read_line(&mut index).expect("Failed to read input");
+                let index: usize = index.trim().parse().expect("Invalid input");
 
-    let transactions = vec![transaction1, transaction2];
-    blockchain.add_block(transactions);
+                blockchain.retrieve_block(index);
+            }
+            4 => {
+                println!("Enter the new difficulty:");
+                let mut difficulty = String::new();
+                io::stdin().read_line(&mut difficulty).expect("Failed to read input");
+                let difficulty: i32 = difficulty.trim().parse().expect("Invalid input");
 
-    println!("{:?}", blockchain);
+                blockchain.set_difficulty(difficulty);
+            }
+            5 => {
+                println!("Enter the index of the block to remove:");
+                let mut index = String::new();
+                io::stdin().read_line(&mut index).expect("Failed to read input");
+                let index: usize = index.trim().parse().expect("Invalid input");
+
+                blockchain.remove_block(index);
+            }
+            6 => {
+                println!("Exiting...");
+                break;
+            }
+            _ => {
+                println!("Invalid choice, please try again");
+            }
+        }
+    }
 }

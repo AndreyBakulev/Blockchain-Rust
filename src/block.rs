@@ -1,56 +1,54 @@
-use chrono::prelude::*;
-use serde::{Serialize, Deserialize};
-use sha2::Digest;
+use sha2::{Digest, Sha256};
+use std::time::{SystemTime, UNIX_EPOCH};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Transaction {
-    pub sender: String,
-    pub receiver: String,
-    pub amount: f32,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 pub struct Block {
-    pub index: u32,
-    pub timestamp: i64,
-    pub transactions: Vec<Transaction>,
+    pub index: i32,
+    pub timestamp: u64,
+    pub data: String,
     pub previous_hash: String,
-    pub hash: String,
-    pub nonce: u32,
+    pub nonce: i64,
 }
 
 impl Block {
-    pub fn new(index: u32, transactions: Vec<Transaction>, previous_hash: String) -> Self {
-        let now = Utc::now();
-        let (nonce, hash) = mine_hash(index, now.timestamp(), &transactions, &previous_hash);
-        Self {
+    pub fn new(data: String, previous_block: Option<&Block>) -> Self {
+        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        let (index, previous_hash) = match previous_block {
+            Some(block) => (
+                block.index + 1,
+                Self::calculate_hash(
+                    block.index.to_string()
+                        + &block.timestamp.to_string()
+                        + &block.data
+                        + &block.previous_hash
+                        + &block.nonce.to_string(),
+                ),
+            ),
+            None => (0, "0".to_string()),
+        };
+        let block = Block {
             index,
-            timestamp: now.timestamp(),
-            transactions,
+            timestamp,
+            data,
             previous_hash,
-            hash,
-            nonce,
-        }
+            nonce: 0,
+        };
+        block
     }
-}
 
-fn mine_hash(index: u32, timestamp: i64, transactions: &[Transaction], previous_hash: &str) -> (u32, String) {
-    let mut nonce = 0;
-    loop {
-        let data = serde_json::json!({
-            "index": index,
-            "timestamp": timestamp,
-            "transactions": transactions,
-            "previous_hash": previous_hash,
-            "nonce": nonce
-        });
+    pub fn calculate_hash(raw_data: String) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(raw_data);
+        let hash = hasher.finalize();
+        hex::encode(hash)
+    }
 
-        let hash = hex::encode(sha2::Sha256::digest(data.to_string().as_bytes()));
-
-        if &hash[..4] == "0000" {
-            return (nonce, hash);
-        }
-
-        nonce += 1;
+    pub fn print_block(&self) {
+        println!("--------------------------------");
+        println!("Index: {}", self.index);
+        println!("Timestamp: {}", self.timestamp);
+        println!("Data: {}", self.data);
+        println!("Previous Hash: {}", self.previous_hash);
+        println!("Nonce: {}", self.nonce);
+        println!("--------------------------------");
     }
 }
