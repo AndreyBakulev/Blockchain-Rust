@@ -42,12 +42,7 @@ fn main() {
                 blockchain.retrieve_block(index);
             }
             4 => {
-                println!("Enter the new difficulty:");
-                let mut difficulty = String::new();
-                io::stdin().read_line(&mut difficulty).expect("Failed to read input");
-                let difficulty: i32 = difficulty.trim().parse().expect("Invalid input");
-
-                blockchain.set_difficulty(difficulty);
+                println!("This does nothing as of now!");
             }
             5 => {
                 println!("Enter the index of the block to remove:");
@@ -67,3 +62,17 @@ fn main() {
         }
     }
 }
+
+/*
+Notes:
+TODO{
+    Add json here
+    figure out parallelization w rust
+}
+LEVELS:
+0: single threaded running (DONE)
+1: parallel running
+2: parallel running with cuda (separate repo)
+3: rust
+4: tauri (netter)
+*/

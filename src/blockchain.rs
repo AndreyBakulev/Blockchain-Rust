@@ -3,44 +3,46 @@ use std::time::Instant;
 use crate::block::Block;
 
 pub struct Blockchain {
-    chain: Vec<Block>,
-    difficulty: i32,
+    chain: Vec<Block>
 }
 
 impl Blockchain {
     pub fn new(difficulty: i32) -> Self {
         let mut blockchain = Blockchain {
-            chain: Vec::new(),
-            difficulty,
+            chain: Vec::new()
         };
         blockchain.create_genesis_block();
         blockchain
     }
 
     fn create_genesis_block(&mut self) {
-        let genesis_block = Block::new("Genesis Block".to_string(), None);
+        let genesis_block = Block::new("Genesis Block".to_string(), 4,None);
         self.chain.push(genesis_block);
-        println!("genesis block created!");
+        println!("genesis block (diff: 4) created!");
     }
 
     pub fn mine_latest(&mut self) {
         let mut nonce = 0;
-        println!("your difficulty is: {}", self.difficulty as usize);
+        println!("Please enter a difficulty for the block:");
+        let mut difficulty = String::new();
+        io::stdin().read_line(&mut difficulty).expect("error reading");
+        let difficulty: i32 = difficulty.trim().parse().expect("Invalid input");
+        println!("your difficulty is: {}", difficulty);
         println!("Please enter Data for new block!");
         let mut data = String::new();
         io::stdin().read_line(&mut data).expect("error reading");
-        let divisor = cmp::min(i32::pow(10, self.difficulty as u32) / 100, 10000);
-        let new_block = Block::new(data, self.chain.last());
-        let correct_string = "0".repeat(self.difficulty as usize);
+        let divisor = cmp::min(i32::pow(10, difficulty as u32) / 100, 10000);
+        let new_block = Block::new(data,difficulty,self.chain.last());
+        let correct_string = "0".repeat(difficulty as usize);
         let previous_block = self.chain.last().unwrap();
         let base_block = previous_block.index.to_string() + &*previous_block.timestamp.to_string() + &*previous_block.data.to_string() + &*previous_block.nonce.to_string() + &*previous_block.previous_hash.to_string();
-        println!("Mining block #{} of {} difficulty",new_block.index, self.difficulty);
+        println!("Mining block #{} of {} difficulty",new_block.index, difficulty);
         let now = Instant::now();
         loop {
             let h1 = base_block.clone();
             //find way to not have h1 and use base_block instead
             let hash: String = Block::calculate_hash(h1 + &*nonce.to_string());
-            if hash[..self.difficulty as usize] == correct_string {
+            if hash[..difficulty as usize] == correct_string {
                 let timer: f64 = ((now.elapsed().as_millis()) as f64) / 1000f64;
                 println!("\nBlock Mined in {} Seconds!\nNonce: {}\nHash: {}",timer,nonce,hash);
                 break;
@@ -78,12 +80,6 @@ impl Blockchain {
             println!("Invalid block index");
         }
     }
-
-    pub fn set_difficulty(&mut self, difficulty: i32) {
-        self.difficulty = difficulty;
-        println!("Difficulty set to {}", difficulty);
-    }
-
     pub fn remove_block(&mut self, index: usize) {
         if index < self.chain.len() {
             self.chain.remove(index);

@@ -7,10 +7,11 @@ pub struct Block {
     pub data: String,
     pub previous_hash: String,
     pub nonce: i64,
+    pub difficulty: i32
 }
 
 impl Block {
-    pub fn new(data: String, previous_block: Option<&Block>) -> Self {
+    pub fn new(data: String,difficulty: i32 ,previous_block: Option<&Block>) -> Self {
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
         let (index, previous_hash) = match previous_block {
             Some(block) => (
@@ -31,6 +32,7 @@ impl Block {
             data,
             previous_hash,
             nonce: 0,
+            difficulty,
         };
         block
     }
