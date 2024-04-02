@@ -1,5 +1,6 @@
 use crate::block::Block;
 use crate::block::Transaction;
+
 //use crate when importing a file relative to the crate root (main.rs)
 #[derive(Debug)]
 pub struct Blockchain {

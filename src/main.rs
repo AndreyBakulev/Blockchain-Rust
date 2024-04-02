@@ -2,7 +2,6 @@ mod blockchain;
 mod block;
 use blockchain::Blockchain;
 use block::Transaction;
-
 fn main() {
     let mut blockchain = Blockchain::new();
 

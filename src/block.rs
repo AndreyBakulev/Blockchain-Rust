@@ -1,5 +1,5 @@
 use chrono::prelude::*;
-use serde::{ Serialize, Deserialize };
+use serde::{Serialize, Deserialize};
 use sha2::Digest;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -36,7 +36,6 @@ impl Block {
 
 fn mine_hash(index: u32, timestamp: i64, transactions: &[Transaction], previous_hash: &str) -> (u32, String) {
     let mut nonce = 0;
-
     loop {
         let data = serde_json::json!({
             "index": index,
