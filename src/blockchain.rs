@@ -1,4 +1,5 @@
 use std::{cmp, io};
+use std::time::Instant;
 use crate::block::Block;
 
 pub struct Blockchain {
@@ -34,11 +35,14 @@ impl Blockchain {
         let previous_block = self.chain.last().unwrap();
         let base_block = previous_block.index.to_string() + &*previous_block.timestamp.to_string() + &*previous_block.data.to_string() + &*previous_block.nonce.to_string() + &*previous_block.previous_hash.to_string();
         println!("Mining block #{} of {} difficulty",new_block.index, self.difficulty);
+        let now = Instant::now();
         loop {
             let h1 = base_block.clone();
             //find way to not have h1 and use base_block instead
             let hash: String = Block::calculate_hash(h1 + &*nonce.to_string());
             if hash[..self.difficulty as usize] == correct_string {
+                let timer: f64 = ((now.elapsed().as_millis()) as f64) / 1000f64;
+                println!("\nBlock Mined in {} Seconds!\nNonce: {}\nHash: {}",timer,nonce,hash);
                 break;
             }
             nonce += 1;
@@ -48,7 +52,6 @@ impl Blockchain {
             }
         }
         self.chain.push(new_block);
-        println!(" \n Block mined successfully!");
     }
 
     pub fn validate_chain(&self) -> bool {

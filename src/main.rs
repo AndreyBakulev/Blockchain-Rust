@@ -5,7 +5,7 @@ use std::io;
 use blockchain::Blockchain;
 
 fn main() {
-    let mut blockchain = Blockchain::new(4);
+    let mut blockchain = Blockchain::new(5);
 
     loop {
         println!("===========================================");
