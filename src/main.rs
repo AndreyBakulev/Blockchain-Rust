@@ -24,7 +24,17 @@ fn main() {
         let choice: i32 = choice.trim().parse().expect("Invalid input");
         match choice {
             1 => {
-                blockchain.mine_latest();
+                println!("Please select mining mode:\nParallel (1)    Linear(2)");
+                let mut parallel = String::new();
+                io::stdin().read_line(&mut parallel).expect("Failed to read input");
+                let parallel: i32 = parallel.trim().parse().expect("Invalid input");
+                if parallel == 1 {
+                    blockchain.mine_latest_parallel();
+                } else if parallel == 2 {
+                    blockchain.mine_latest();
+                } else {
+                    println!("Put in a valid number you ape");
+                }
             }
             2 => {
                 if blockchain.validate_chain() {
