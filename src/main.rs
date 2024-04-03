@@ -1,12 +1,11 @@
 mod blockchain;
 mod block;
-
 use std::io;
+use std::io::Write;
 use blockchain::Blockchain;
 
 fn main() {
-    let mut blockchain = Blockchain::new(5);
-
+    let mut blockchain = Blockchain::new();
     loop {
         println!("===========================================");
         println!("=====CPU Bitcoin miner by Andrey Bakulev===");
@@ -78,6 +77,14 @@ Notes:
 TODO{
     Add json here
     figure out parallelization w rust
+    Networking with netter {
+    find free cloud db (azure aws google cloud)
+    }
+    look at Rust CUDA
+}
+PROBLEMS{
+    parallel counting is weird, maybe make my own?
+    printing out unevenly (counting up by like 13k instead of 10k) only at high numbers
 }
 LEVELS:
 0: single threaded running (DONE)
