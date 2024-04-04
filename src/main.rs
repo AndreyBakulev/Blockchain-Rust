@@ -1,5 +1,6 @@
 mod blockchain;
 mod block;
+
 use std::io;
 use blockchain::Blockchain;
 

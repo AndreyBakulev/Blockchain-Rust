@@ -5,6 +5,7 @@ use crate::block::Block;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::thread;
+
 pub struct Blockchain {
     chain: Vec<Block>,
 }
@@ -26,7 +27,7 @@ impl Blockchain {
         println!("Please enter Data for new difficulty {} block!", difficulty);
         let mut data = String::new();
         io::stdin().read_line(&mut data).expect("error reading");
-        let divisor = cmp::min(i64::pow(10, (difficulty-2) as u32), 1000);
+        let divisor = cmp::min(i64::pow(10, (difficulty - 2) as u32), 1000);
         let mut new_block = Block::new(data, difficulty, self.chain.last());
         let correct_string: &str = &*"0".repeat(difficulty as usize);
         let base_block = new_block.index.to_string()
@@ -67,7 +68,6 @@ impl Blockchain {
             + &new_block.data
             + &new_block.previous_hash);
         let num_threads = num_cpus::get();
-        let nonce = Arc::new(AtomicI64::new(0));
         let found = Arc::new(AtomicBool::new(false));
         let found_nonce = Arc::new(std::sync::Mutex::new(None));
         println!("Mining block #{} of {} difficulty, {} threads used", new_block.index, difficulty, num_threads);
@@ -81,7 +81,6 @@ impl Blockchain {
         let threads: Vec<_> = (0..num_threads)
             .map(|i| {
                 let input = Arc::clone(&input);
-                let nonce = Arc::clone(&nonce);
                 let found = Arc::clone(&found);
                 let found_nonce = Arc::clone(&found_nonce);
                 let correct_string = correct_string.to_owned();
