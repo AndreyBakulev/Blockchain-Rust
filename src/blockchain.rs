@@ -92,7 +92,7 @@ impl Blockchain {
                         }
                         let hash = Block::calculate_hash(input.to_string() + &current_nonce.to_string());
                         if current_nonce % divisor == 0 {
-                            print!("\x1B[{}A\rThread {}: Trying nonce {}, Hash: {}\n", num_threads - i, i, current_nonce, hash);
+                            print!("\x1B[{}A\r\x1B[KThread {}: Trying nonce {}, Hash: {}\x1B[{}B", i + 1, i, current_nonce, hash, i + 1);
                             io::stdout().flush().unwrap();
                         }
                         if hash.starts_with(&correct_string) {
@@ -109,6 +109,9 @@ impl Blockchain {
         for thread in threads {
             thread.join().unwrap();
         }
+
+        // Move the cursor down to the original position
+        print!("\x1B[{}B", num_threads);
 
         let found_nonce_value = *found_nonce.lock().unwrap();
         match found_nonce_value {
