@@ -1,15 +1,17 @@
-use rayon::prelude::*;
 use std::{cmp, io};
+use std::io::Write;
 use std::time::Instant;
 use crate::block::Block;
-
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
+use std::thread;
 pub struct Blockchain {
     chain: Vec<Block>,
 }
 
 impl Blockchain {
     pub fn new() -> Self {
-        let mut blockchain = Blockchain {
+        let blockchain = Blockchain {
             chain: Vec::new()
         };
         blockchain
@@ -24,14 +26,13 @@ impl Blockchain {
         println!("Please enter Data for new difficulty {} block!", difficulty);
         let mut data = String::new();
         io::stdin().read_line(&mut data).expect("error reading");
-        let divisor = cmp::min(i32::pow(10, difficulty as u32) / 100, 10000) as i64;
+        let divisor = cmp::min(i64::pow(10, (difficulty-2) as u32), 1000);
         let mut new_block = Block::new(data, difficulty, self.chain.last());
         let correct_string: &str = &*"0".repeat(difficulty as usize);
         let base_block = new_block.index.to_string()
             + &new_block.timestamp.to_string()
             + &new_block.data
             + &new_block.previous_hash;
-        //println!("Base: {}", base_block);
         println!("Mining block #{} of {} difficulty", new_block.index, difficulty);
         let now = Instant::now();
         loop {
@@ -51,7 +52,6 @@ impl Blockchain {
         self.chain.push(new_block);
     }
     pub fn mine_latest_parallel(&mut self) {
-        let mut nonce: i64 = 0;
         println!("Please enter a difficulty for the block:");
         let mut difficulty = String::new();
         io::stdin().read_line(&mut difficulty).expect("error reading");
@@ -59,31 +59,70 @@ impl Blockchain {
         println!("Please enter Data for new difficulty {} block!", difficulty);
         let mut data = String::new();
         io::stdin().read_line(&mut data).expect("error reading");
-        let divisor = cmp::min(i32::pow(10, difficulty as u32) / 100, 10000) as i64;
+        let divisor = cmp::min(i64::pow(10, (difficulty - 2) as u32), 1000);
         let mut new_block = Block::new(data, difficulty, self.chain.last());
         let correct_string: &str = &*"0".repeat(difficulty as usize);
-        let base_block = new_block.index.to_string()
+        let input = Arc::new(new_block.index.to_string()
             + &new_block.timestamp.to_string()
             + &new_block.data
-            + &new_block.previous_hash;
-        //println!("Base: {}", base_block);
-        println!("Mining block #{} of {} difficulty", new_block.index, difficulty);
-        let now = Instant::now();
-        loop {
-            let hash: String = Block::calculate_hash(base_block.clone() + &*nonce.to_string());
-            if hash.starts_with(correct_string) {
-                let timer: f64 = (now.elapsed().as_millis() as f64) / 1000f64;
-                println!("\nBlock Mined in {} Seconds!\nNonce: {}\nHash: {}", timer, nonce, hash);
-                break;
-            }
-            if nonce % divisor == 0
-            {
-                print!("\r#{}, Hash: {}", nonce, hash);
-            }
-            nonce += 1;
+            + &new_block.previous_hash);
+        let num_threads = num_cpus::get();
+        let nonce = Arc::new(AtomicI64::new(0));
+        let found = Arc::new(AtomicBool::new(false));
+        let found_nonce = Arc::new(std::sync::Mutex::new(None));
+        println!("Mining block #{} of {} difficulty, {} threads used", new_block.index, difficulty, num_threads);
+        let now = Instant::now(); // Start the timer
+
+        // Print the initial lines for each thread
+        for i in 0..num_threads {
+            println!("Thread {}: ", i);
         }
-        new_block.nonce = nonce;
-        self.chain.push(new_block);
+
+        let threads: Vec<_> = (0..num_threads)
+            .map(|i| {
+                let input = Arc::clone(&input);
+                let nonce = Arc::clone(&nonce);
+                let found = Arc::clone(&found);
+                let found_nonce = Arc::clone(&found_nonce);
+                let correct_string = correct_string.to_owned();
+                thread::spawn(move || {
+                    let mut current_nonce = i as i64;
+                    loop {
+                        if found.load(Ordering::Relaxed) {
+                            break;
+                        }
+                        let hash = Block::calculate_hash(input.to_string() + &current_nonce.to_string());
+                        if current_nonce % divisor == 0 {
+                            print!("\x1B[{}A\rThread {}: Trying nonce {}, Hash: {}\n", num_threads - i, i, current_nonce, hash);
+                            io::stdout().flush().unwrap();
+                        }
+                        if hash.starts_with(&correct_string) {
+                            found.store(true, Ordering::Relaxed);
+                            *found_nonce.lock().unwrap() = Some(current_nonce);
+                            break;
+                        }
+                        current_nonce += num_threads as i64;
+                    }
+                })
+            })
+            .collect();
+
+        for thread in threads {
+            thread.join().unwrap();
+        }
+
+        let found_nonce_value = *found_nonce.lock().unwrap();
+        match found_nonce_value {
+            Some(nonce_value) => {
+                let timer: f64 = (now.elapsed().as_millis() as f64) / 1000f64;
+                println!("\nBlock Mined in {} Seconds with Parallelism!\nNonce: {}\nHash: {}", timer, nonce_value, Block::calculate_hash(input.to_string() + &nonce_value.to_string()));
+                new_block.nonce = nonce_value;
+                self.chain.push(new_block);
+            }
+            None => {
+                println!("No valid nonce found.");
+            }
+        }
     }
     pub fn validate_chain(&self) -> bool {
         for i in 1..self.chain.len() {
