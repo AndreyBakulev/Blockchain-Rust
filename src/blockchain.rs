@@ -3,7 +3,7 @@ use std::io::Write;
 use std::time::Instant;
 use crate::block::Block;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
 pub struct Blockchain {
