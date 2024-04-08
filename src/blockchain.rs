@@ -1,4 +1,5 @@
-use std::{cmp, io};
+use std::{cmp, fs, io};
+use std::fs::OpenOptions;
 use std::io::Write;
 use std::time::Instant;
 use crate::block::Block;
@@ -75,7 +76,7 @@ impl Blockchain {
 
         // Print the initial lines for each thread
         for i in 0..num_threads {
-            println!("Thread {}: ", i);
+            println!("Thread {}: ", i+1);
         }
 
         let threads: Vec<_> = (0..num_threads)
@@ -91,9 +92,14 @@ impl Blockchain {
                             break;
                         }
                         let hash = Block::calculate_hash(input.to_string() + &current_nonce.to_string());
+                        let mut file = OpenOptions::new()
+                            .write(true)
+                            .append(true)
+                            .open("blockchain.txt")
+                            .expect("Unable to open file");
                         if current_nonce % divisor == 0 {
-                            print!("\x1B[{}A\r\x1B[KThread {}: Trying nonce {}, Hash: {}\x1B[{}B", i + 1, i, current_nonce, hash, i + 1);
-                            io::stdout().flush().unwrap();
+                            let data = format!("Thread: {} Nonce: {} Hash: {}\n", i + 1, current_nonce, hash);
+                            file.write_all(data.as_bytes()).expect("Unable to write to file");
                         }
                         if hash.starts_with(&correct_string) {
                             found.store(true, Ordering::Relaxed);
