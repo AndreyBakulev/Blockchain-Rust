@@ -83,7 +83,7 @@ TODO{
     look at Rust CUDA
 }
 PROBLEMS{
-    parallel counting is weird, maybe make my own?
+    when writing to file, make sure the factors work (since it counts up by 8)
     printing out unevenly (counting up by like 13k instead of 10k) only at high numbers
 }
 LEVELS:

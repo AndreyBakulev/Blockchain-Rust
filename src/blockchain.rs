@@ -1,7 +1,6 @@
 use std::{cmp, fs, io};
-use std::fs::OpenOptions;
-use std::io::Write;
-use std::time::Instant;
+use std::io::{Seek, Write};
+use std::time::{Duration, Instant};
 use crate::block::Block;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -73,12 +72,6 @@ impl Blockchain {
         let found_nonce = Arc::new(std::sync::Mutex::new(None));
         println!("Mining block #{} of {} difficulty, {} threads used", new_block.index, difficulty, num_threads);
         let now = Instant::now(); // Start the timer
-
-        // Print the initial lines for each thread
-        for i in 0..num_threads {
-            println!("Thread {}: ", i+1);
-        }
-
         let threads: Vec<_> = (0..num_threads)
             .map(|i| {
                 let input = Arc::clone(&input);
@@ -87,20 +80,19 @@ impl Blockchain {
                 let correct_string = correct_string.to_owned();
                 thread::spawn(move || {
                     let mut current_nonce = i as i64;
+                    let update_interval = Duration::from_millis(1000); // Adjust the interval as needed
+                    let mut last_update = Instant::now();
                     loop {
                         if found.load(Ordering::Relaxed) {
                             break;
                         }
                         let hash = Block::calculate_hash(input.to_string() + &current_nonce.to_string());
-                        let mut file = OpenOptions::new()
-                            .write(true)
-                            .append(true)
-                            .open("blockchain.txt")
-                            .expect("Unable to open file");
-                        if current_nonce % 10 == 0 {
-                            let data = format!("Thread: {} Nonce: {} Hash: {}\n", i + 1, current_nonce, hash);
-                            file.write_all(data.as_bytes()).expect("Unable to write to file");
+                        if last_update.elapsed() >= update_interval {
+                            // Move the cursor to the beginning of the line for the current thread
+                            println!("Thread: {} Nonce: {} Hash: {}", i + 1, current_nonce, hash);
+                            last_update = Instant::now();
                         }
+
                         if hash.starts_with(&correct_string) {
                             found.store(true, Ordering::Relaxed);
                             *found_nonce.lock().unwrap() = Some(current_nonce);
@@ -115,10 +107,6 @@ impl Blockchain {
         for thread in threads {
             thread.join().unwrap();
         }
-
-        // Move the cursor down to the original position
-        print!("\x1B[{}B", num_threads);
-
         let found_nonce_value = *found_nonce.lock().unwrap();
         match found_nonce_value {
             Some(nonce_value) => {
