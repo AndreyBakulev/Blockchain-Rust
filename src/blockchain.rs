@@ -97,7 +97,7 @@ impl Blockchain {
                             .append(true)
                             .open("blockchain.txt")
                             .expect("Unable to open file");
-                        if current_nonce % divisor == 0 {
+                        if current_nonce % 10 == 0 {
                             let data = format!("Thread: {} Nonce: {} Hash: {}\n", i + 1, current_nonce, hash);
                             file.write_all(data.as_bytes()).expect("Unable to write to file");
                         }
