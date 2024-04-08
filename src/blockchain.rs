@@ -1,5 +1,4 @@
-use std::{cmp, fs, io};
-use std::io::{Seek, Write};
+use std::{cmp, io};
 use std::time::{Duration, Instant};
 use crate::block::Block;
 use std::sync::Arc;
@@ -60,7 +59,6 @@ impl Blockchain {
         println!("Please enter Data for new difficulty {} block!", difficulty);
         let mut data = String::new();
         io::stdin().read_line(&mut data).expect("error reading");
-        let divisor = cmp::min(i64::pow(10, (difficulty - 2) as u32), 1000);
         let mut new_block = Block::new(data, difficulty, self.chain.last());
         let correct_string: &str = &*"0".repeat(difficulty as usize);
         let input = Arc::new(new_block.index.to_string()
@@ -80,7 +78,7 @@ impl Blockchain {
                 let correct_string = correct_string.to_owned();
                 thread::spawn(move || {
                     let mut current_nonce = i as i64;
-                    let update_interval = Duration::from_millis(1000); // Adjust the interval as needed
+                    let update_interval = Duration::from_millis(100); // Adjust the interval as needed
                     let mut last_update = Instant::now();
                     loop {
                         if found.load(Ordering::Relaxed) {
