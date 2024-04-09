@@ -1,9 +1,7 @@
 mod blockchain;
 mod block;
-
 use std::io;
 use blockchain::Blockchain;
-
 fn main() {
     let mut blockchain = Blockchain::new();
     loop {
@@ -23,17 +21,7 @@ fn main() {
         let choice: i32 = choice.trim().parse().expect("Invalid input");
         match choice {
             1 => {
-                println!("Please select mining mode:\nParallel (1)    Linear(2)");
-                let mut parallel = String::new();
-                io::stdin().read_line(&mut parallel).expect("Failed to read input");
-                let parallel: i32 = parallel.trim().parse().expect("Invalid input");
-                if parallel == 1 {
-                    blockchain.mine_latest_parallel();
-                } else if parallel == 2 {
-                    blockchain.mine_latest();
-                } else {
-                    println!("Put in a valid number you ape");
-                }
+                blockchain.mine_latest(None);
             }
             2 => {
                 if blockchain.validate_chain() {
@@ -75,16 +63,15 @@ fn main() {
 /*
 Notes:
 TODO{
+    to recalculate block, add index param into mine and check for some/none
     Add json here
-    figure out parallelization w rust
     Networking with netter {
     find free cloud db (azure aws google cloud)
     }
     look at Rust CUDA
 }
 PROBLEMS{
-    when writing to file, make sure the factors work (since it counts up by 8)
-    printing out unevenly (counting up by like 13k instead of 10k) only at high numbers
+
 }
 LEVELS:
 0: single threaded running (DONE)
