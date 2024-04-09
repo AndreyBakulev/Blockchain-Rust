@@ -4,7 +4,9 @@ use crate::block::Block;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
+use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Blockchain {
     chain: Vec<Block>,
 }
@@ -22,7 +24,7 @@ impl Blockchain {
                 println!("Recalculating block!");
                 let this_block = &self.chain[idx as usize];
                 let last_block = if idx >= 0 {
-                    Some(&self.chain[idx as usize])
+                    Some(&self.chain[idx as usize - 1])
                 } else {
                     None
                 };
@@ -108,6 +110,8 @@ impl Blockchain {
                     println!("\nBlock Mined in {} Seconds with Parallelism!\nNonce: {}\nHash: {}", timer, nonce_value, Block::calculate_hash(input.to_string() + &nonce_value.to_string()));
                     new_block.nonce = nonce_value;
                     self.chain.push(new_block);
+                    let json = serde_json::to_string(&self.chain);
+                    println!("{:#?}", json);
                 }
                 None => {
                     println!("No valid nonce found.");
@@ -137,6 +141,8 @@ impl Blockchain {
             }
             new_block.nonce = nonce;
             self.chain.push(new_block);
+            let json = serde_json::to_string(&self.chain);
+            println!("{:#?}", json);
         }
     }
     pub fn validate_chain(&self) -> bool {
