@@ -1,10 +1,51 @@
 mod blockchain;
 mod block;
+
+use std::fs::File;
 use std::io;
+use std::io::Read;
+use std::path::Path;
 use blockchain::Blockchain;
 fn main() {
     let mut blockchain = Blockchain::new();
     loop {
+        println!("===========================================");
+        println!("=====CPU Bitcoin miner by Andrey Bakulev===");
+        println!("===========================================");
+        println!("==================Options==================");
+        println!("=========1.Create New Blockchain===========");
+        println!("========2.Load Existing Blockchain=========");
+
+        let mut choice1 = String::new();
+        io::stdin().read_line(&mut choice1).expect("Failed to read input");
+        let choice1: i32 = choice1.trim().parse().expect("Invalid input");
+        match choice1 {
+            1 => {
+                println!("Give a name to your new Blockchain!");
+                let mut name: String = String::new();
+                io::stdin().read_line(&mut name).expect("Failed to read input");
+            }
+            2 => {
+                println!("what is the name of your Blockchain?");
+                let mut name: String = String::new();
+                io::stdin().read_line(&mut name).expect("Failed to read input");
+                let file_name = Path::new(&name);
+                if file_name.exists(){
+                    let file = format!("{}.json", name);
+                    let mut file = File::open(file).unwrap();
+                    let mut contents = String::new();
+                    file.read_to_string(&mut contents).unwrap();
+                    let blockchain: Blockchain = serde_json::from_str(&contents).unwrap();
+                    //might not work
+                } else {
+                    println!("No Blockchain with that name found!");
+                }
+            }
+            _ => {
+                println!("Please enter 1 or 2 monkey!!!");
+            }
+
+        }
         println!("===========================================");
         println!("=====CPU Bitcoin miner by Andrey Bakulev===");
         println!("===========================================");

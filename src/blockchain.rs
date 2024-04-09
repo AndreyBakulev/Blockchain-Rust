@@ -1,4 +1,6 @@
 use std::{cmp, io};
+use std::fs::File;
+use std::io::Write;
 use std::time::{Duration, Instant};
 use crate::block::Block;
 use std::sync::Arc;
@@ -110,8 +112,10 @@ impl Blockchain {
                     println!("\nBlock Mined in {} Seconds with Parallelism!\nNonce: {}\nHash: {}", timer, nonce_value, Block::calculate_hash(input.to_string() + &nonce_value.to_string()));
                     new_block.nonce = nonce_value;
                     self.chain.push(new_block);
-                    let json = serde_json::to_string(&self.chain);
+                    let json = serde_json::to_string(&self.chain).unwrap();
                     println!("{:#?}", json);
+                    let mut file = File::create("blockchain.json").unwrap();
+                    file.write_all(json.as_bytes()).unwrap();
                 }
                 None => {
                     println!("No valid nonce found.");
@@ -141,8 +145,10 @@ impl Blockchain {
             }
             new_block.nonce = nonce;
             self.chain.push(new_block);
-            let json = serde_json::to_string(&self.chain);
+            let json = serde_json::to_string(&self.chain).unwrap();
             println!("{:#?}", json);
+            let mut file = File::create("blockchain.json").unwrap();
+            file.write_all(json.as_bytes()).unwrap();
         }
     }
     pub fn validate_chain(&self) -> bool {
