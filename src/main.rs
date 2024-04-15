@@ -6,6 +6,8 @@ use std::io;
 use std::io::Read;
 use std::path::Path;
 use blockchain::Blockchain;
+use crate::block::Block;
+
 fn main() {
     let mut blockchain = Blockchain::new();
     loop {
@@ -19,32 +21,35 @@ fn main() {
         let mut choice1 = String::new();
         io::stdin().read_line(&mut choice1).expect("Failed to read input");
         let choice1: i32 = choice1.trim().parse().expect("Invalid input");
+        let mut json_name = File::create();
         match choice1 {
             1 => {
                 println!("Give a name to your new Blockchain!");
-                let mut name: String = String::new();
-                io::stdin().read_line(&mut name).expect("Failed to read input");
+                io::stdin().read_line(&mut json_name).expect("Failed to read input");
+                let name2 = format!("{}.json",json_name);
+                let mut file = File::create(name2.clone()).unwrap();
             }
             2 => {
                 println!("what is the name of your Blockchain?");
-                let mut name: String = String::new();
-                io::stdin().read_line(&mut name).expect("Failed to read input");
-                let file_name = Path::new(&name);
-                if file_name.exists(){
-                    let file = format!("{}.json", name);
-                    let mut file = File::open(file).unwrap();
+                io::stdin().read_line(&mut json_name).expect("Failed to read input");
+                let file_name = Path::new(&json_name);
+                if file_name.exists() {
+                    let mut file = File::open(file_name).unwrap();
                     let mut contents = String::new();
                     file.read_to_string(&mut contents).unwrap();
-                    let blockchain: Blockchain = serde_json::from_str(&contents).unwrap();
-                    //might not work
+                    println!("Contents: {}", contents);
+                    let chain: Vec<Block> = serde_json::from_str(&contents).unwrap();
+                    blockchain.chain = chain;
+                    if let Some(last_block) = blockchain.chain.last() {
+                        println!("Last block data: {}", last_block.data);
+                    }
                 } else {
-                    println!("No Blockchain with that name found!");
+                    println!("Blockchain with name: {} Not found!",json_name);
                 }
             }
             _ => {
                 println!("Please enter 1 or 2 monkey!!!");
             }
-
         }
         println!("===========================================");
         println!("=====CPU Bitcoin miner by Andrey Bakulev===");
@@ -62,7 +67,8 @@ fn main() {
         let choice: i32 = choice.trim().parse().expect("Invalid input");
         match choice {
             1 => {
-                blockchain.mine_latest(None);
+                println!("Name of JSON: {}", json_name.clone());
+                blockchain.mine_latest(None,json_name);
             }
             2 => {
                 if blockchain.validate_chain() {
@@ -88,7 +94,7 @@ fn main() {
                 io::stdin().read_line(&mut index).expect("Failed to read input");
                 let index: usize = index.trim().parse().expect("Invalid input");
 
-                blockchain.remove_block(index);
+                blockchain.remove_block(index,json_name.clone());
             }
             6 => {
                 println!("Exiting...");

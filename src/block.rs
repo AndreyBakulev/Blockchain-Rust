@@ -4,16 +4,16 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Block {
-    pub index: i32,
+    pub index: u64,
     pub timestamp: u64,
     pub data: String,
     pub previous_hash: String,
-    pub nonce: i64,
-    pub difficulty: i32,
+    pub nonce: u64,
+    pub difficulty: u64,
 }
 
 impl Block {
-    pub fn new(data: String, difficulty: i32, previous_block: Option<&Block>) -> Self {
+    pub fn new(data: String, difficulty: u64, previous_block: Option<&Block>) -> Self {
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
         let (index, previous_hash) = match previous_block {
             Some(block) => (

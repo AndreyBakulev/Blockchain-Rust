@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Blockchain {
-    chain: Vec<Block>,
+    pub(crate) chain: Vec<Block>,
 }
 
 impl Blockchain {
@@ -20,9 +20,9 @@ impl Blockchain {
         };
         blockchain
     }
-    pub fn mine_latest(&mut self, index: Option<i8>) {
+    pub fn mine_latest(&mut self, index: Option<u64>, file: File) {
         let (data, difficulty, last_block) = match index {
-            Some(idx) if idx >= 0 && idx < self.chain.len() as i8 => {
+            Some(idx) if idx >= 0 && idx < self.chain.len() as u64 => {
                 println!("Recalculating block!");
                 let this_block = &self.chain[idx as usize];
                 let last_block = if idx >= 0 {
@@ -36,7 +36,7 @@ impl Blockchain {
                 println!("Please enter a difficulty for the block:");
                 let mut difficulty = String::new();
                 io::stdin().read_line(&mut difficulty).expect("error reading");
-                let difficulty: i32 = difficulty.trim().parse().expect("Invalid input");
+                let difficulty: u64 = difficulty.trim().parse().expect("Invalid input");
                 println!("Please enter Data for new difficulty {} block!", difficulty);
                 let mut data = String::new();
                 io::stdin().read_line(&mut data).expect("error reading");
@@ -110,11 +110,10 @@ impl Blockchain {
                 Some(nonce_value) => {
                     let timer: f64 = (now.elapsed().as_millis() as f64) / 1000f64;
                     println!("\nBlock Mined in {} Seconds with Parallelism!\nNonce: {}\nHash: {}", timer, nonce_value, Block::calculate_hash(input.to_string() + &nonce_value.to_string()));
-                    new_block.nonce = nonce_value;
+                    new_block.nonce = nonce_value as u64;
                     self.chain.push(new_block);
                     let json = serde_json::to_string(&self.chain).unwrap();
                     println!("{:#?}", json);
-                    let mut file = File::create("blockchain.json").unwrap();
                     file.write_all(json.as_bytes()).unwrap();
                 }
                 None => {
@@ -143,12 +142,13 @@ impl Blockchain {
                 }
                 nonce += 1;
             }
-            new_block.nonce = nonce;
+            new_block.nonce = nonce as u64;
             self.chain.push(new_block);
             let json = serde_json::to_string(&self.chain).unwrap();
             println!("{:#?}", json);
-            let mut file = File::create("blockchain.json").unwrap();
-            file.write_all(json.as_bytes()).unwrap();
+            let name2 = format!("{}.json",file);
+            let mut json_file = File::create(name2).unwrap();
+            json_file.write_all(json.as_bytes()).unwrap();
         }
     }
     pub fn validate_chain(&self) -> bool {
@@ -172,13 +172,13 @@ impl Blockchain {
             println!("Invalid block index");
         }
     }
-    pub fn remove_block(&mut self, index: usize) {
+    pub fn remove_block(&mut self, index: usize, file: String) {
         if index < self.chain.len() {
             self.chain.remove(index);
             println!("Block removed successfully");
             for i in index .. self.chain.len(){
                 println!("recalculating hash!");
-                self.mine_latest(Some(i as i8));
+                self.mine_latest(Some(i as u64),file.clone());
             }
         } else {
             println!("Invalid block index");
