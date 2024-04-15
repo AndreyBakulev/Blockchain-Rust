@@ -20,7 +20,7 @@ impl Blockchain {
         };
         blockchain
     }
-    pub fn mine_latest(&mut self, index: Option<u64>, file: File) {
+    pub fn mine_latest(&mut self, index: Option<u64>, mut file: File) {
         let (data, difficulty, last_block) = match index {
             Some(idx) if idx >= 0 && idx < self.chain.len() as u64 => {
                 println!("Recalculating block!");
@@ -146,7 +146,7 @@ impl Blockchain {
             self.chain.push(new_block);
             let json = serde_json::to_string(&self.chain).unwrap();
             println!("{:#?}", json);
-            let name2 = format!("{}.json",file);
+            let name2 = format!("{:?}.json",file);
             let mut json_file = File::create(name2).unwrap();
             json_file.write_all(json.as_bytes()).unwrap();
         }
@@ -172,13 +172,13 @@ impl Blockchain {
             println!("Invalid block index");
         }
     }
-    pub fn remove_block(&mut self, index: usize, file: String) {
+    pub fn remove_block(&mut self, index: usize,mut file: File) {
         if index < self.chain.len() {
             self.chain.remove(index);
             println!("Block removed successfully");
             for i in index .. self.chain.len(){
                 println!("recalculating hash!");
-                self.mine_latest(Some(i as u64),file.clone());
+                self.mine_latest(Some(i as u64),file.try_clone().unwrap());
             }
         } else {
             println!("Invalid block index");

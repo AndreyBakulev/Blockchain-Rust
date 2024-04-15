@@ -21,19 +21,21 @@ fn main() {
         let mut choice1 = String::new();
         io::stdin().read_line(&mut choice1).expect("Failed to read input");
         let choice1: i32 = choice1.trim().parse().expect("Invalid input");
-        let mut json_name = File::create();
+        let mut json_string: String = String::new();
         match choice1 {
             1 => {
                 println!("Give a name to your new Blockchain!");
-                io::stdin().read_line(&mut json_name).expect("Failed to read input");
-                let name2 = format!("{}.json",json_name);
+                io::stdin().read_line(&mut json_string).expect("Failed to read input");
+                let name2 = format!("{}.json",json_string);
                 let mut file = File::create(name2.clone()).unwrap();
             }
             2 => {
                 println!("what is the name of your Blockchain?");
-                io::stdin().read_line(&mut json_name).expect("Failed to read input");
-                let file_name = Path::new(&json_name);
+                io::stdin().read_line(&mut json_string).expect("Failed to read input");
+                let name2 = format!("{}.json",json_string);
+                let file_name = Path::new(&name2);
                 if file_name.exists() {
+                    println!("File Successfully found!");
                     let mut file = File::open(file_name).unwrap();
                     let mut contents = String::new();
                     file.read_to_string(&mut contents).unwrap();
@@ -44,7 +46,7 @@ fn main() {
                         println!("Last block data: {}", last_block.data);
                     }
                 } else {
-                    println!("Blockchain with name: {} Not found!",json_name);
+                    println!("Blockchain with name: {} Not found!",json_string);
                 }
             }
             _ => {
@@ -65,10 +67,12 @@ fn main() {
         let mut choice = String::new();
         io::stdin().read_line(&mut choice).expect("Failed to read input");
         let choice: i32 = choice.trim().parse().expect("Invalid input");
+        let formatter = format!("{}.json",json_string);
+        let json_file: File = File::create(formatter).unwrap();
         match choice {
             1 => {
-                println!("Name of JSON: {}", json_name.clone());
-                blockchain.mine_latest(None,json_name);
+                println!("Name of JSON: {}", json_string.clone());
+                blockchain.mine_latest(None,json_file);
             }
             2 => {
                 if blockchain.validate_chain() {
@@ -94,7 +98,7 @@ fn main() {
                 io::stdin().read_line(&mut index).expect("Failed to read input");
                 let index: usize = index.trim().parse().expect("Invalid input");
 
-                blockchain.remove_block(index,json_name.clone());
+                blockchain.remove_block(index,json_file);
             }
             6 => {
                 println!("Exiting...");
